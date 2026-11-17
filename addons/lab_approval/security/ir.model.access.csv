@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lab_approval_request_employee,lab.approval.request.employee,model_lab_approval_request,lab_base.group_lab_employee,1,1,1,0
+access_lab_approval_request_manager,lab.approval.request.manager,model_lab_approval_request,lab_base.group_lab_manager,1,1,1,1
+access_lab_approval_request_director,lab.approval.request.director,model_lab_approval_request,lab_base.group_lab_director,1,1,1,1

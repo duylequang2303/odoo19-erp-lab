@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Nhóm (category) chứa các nhóm quyền của dự án Lab -->
+    <record id="module_category_lab" model="ir.module.category">
+        <field name="name">Lab</field>
+        <field name="description">Các nhóm quyền chung cho dự án odoo19-erp-lab</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Nhân viên: tạo và xem phiếu đề xuất của mình -->
+    <record id="group_lab_employee" model="res.groups">
+        <field name="name">Employee</field>
+        <field name="category_id" ref="module_category_lab" />
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]" />
+    </record>
+
+    <!-- Trưởng phòng: bao gồm quyền Employee, được duyệt phiếu -->
+    <record id="group_lab_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_category_lab" />
+        <field name="implied_ids" eval="[(4, ref('group_lab_employee'))]" />
+    </record>
+
+    <!-- Giám đốc: bao gồm quyền Manager, duyệt các phiếu giá trị lớn -->
+    <record id="group_lab_director" model="res.groups">
+        <field name="name">Director</field>
+        <field name="category_id" ref="module_category_lab" />
+        <field name="implied_ids" eval="[(4, ref('group_lab_manager'))]" />
+    </record>
+</odoo>

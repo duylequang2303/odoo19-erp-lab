@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu gốc "Lab" chứa toàn bộ module của dự án -->
+    <menuitem
+        id="menu_lab_root"
+        name="Lab"
+        sequence="100"
+        web_icon="lab_base,static/description/icon.png"
+    />
+</odoo>
