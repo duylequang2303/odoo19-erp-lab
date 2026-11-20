@@ -14,7 +14,7 @@
                     name="state"
                     widget="badge"
                     decoration-info="state == 'draft'"
-                    decoration-warning="state == 'submitted'"
+                    decoration-warning="state in ('submitted','manager_approved')"
                     decoration-success="state == 'approved'"
                     decoration-danger="state == 'rejected'"
                 />
@@ -36,28 +36,36 @@
                         invisible="state != 'draft'"
                     />
                     <button
-                        name="action_approve"
+                        name="action_manager_approve"
                         type="object"
-                        string="Duyệt"
-                        class="btn-primary"
+                        string="Duyệt (Trưởng phòng)"
+                        groups="lab_base.group_lab_manager,lab_base.group_lab_director"
                         invisible="state != 'submitted'"
+                    />
+                    <button
+                        name="action_director_approve"
+                        type="object"
+                        string="Duyệt (Giám đốc)"
+                        class="btn-primary"
+                        groups="lab_base.group_lab_director"
+                        invisible="state != 'manager_approved'"
                     />
                     <button
                         name="action_reject"
                         type="object"
                         string="Từ chối"
-                        invisible="state != 'submitted'"
+                        invisible="state not in ('submitted', 'manager_approved')"
                     />
                     <button
                         name="action_reset_to_draft"
                         type="object"
                         string="Trả về Nháp"
-                        invisible="state not in ('submitted', 'rejected')"
+                        invisible="state != 'rejected'"
                     />
                     <field
                         name="state"
                         widget="statusbar"
-                        statusbar_visible="draft,submitted,approved,rejected"
+                        statusbar_visible="draft,submitted,manager_approved,approved,rejected"
                     />
                 </header>
                 <sheet>
@@ -76,8 +84,8 @@
                             <field name="date_request" />
                         </group>
                         <group>
-                            <!-- Chỉ sửa được số tiền khi phiếu còn ở trạng thái Nháp -->
                             <field name="amount" readonly="state != 'draft'" />
+                            <field name="need_director" readonly="1" />
                         </group>
                     </group>
                     <field

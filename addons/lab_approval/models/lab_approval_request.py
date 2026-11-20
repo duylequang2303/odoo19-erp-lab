@@ -1,6 +1,8 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+APPROVAL_THRESHOLD = 5_000_000
+
 
 class LabApprovalRequest(models.Model):
     _name = "lab.approval.request"
@@ -16,7 +18,7 @@ class LabApprovalRequest(models.Model):
         tracking=True,
     )
     department = fields.Char(string="Phòng ban", tracking=True)
-    amount = fields.Float(string="Số tiền (VND)", digits=(12, 2), tracking=True)
+    amount = fields.Float(string="Số tiền (VND)", digits=(14, 2), tracking=True)
     description = fields.Text(string="Mô tả")
     date_request = fields.Date(
         string="Ngày tạo", default=fields.Date.context_today, tracking=True
@@ -24,7 +26,8 @@ class LabApprovalRequest(models.Model):
     state = fields.Selection(
         [
             ("draft", "Nháp"),
-            ("submitted", "Chờ duyệt"),
+            ("submitted", "Chờ duyệt TP"),
+            ("manager_approved", "Chờ duyệt GĐ"),
             ("approved", "Đã duyệt"),
             ("rejected", "Từ chối"),
         ],
@@ -32,6 +35,12 @@ class LabApprovalRequest(models.Model):
         default="draft",
         tracking=True,
         copy=False,
+    )
+    need_director = fields.Boolean(
+        string="Cần Giám đốc duyệt",
+        compute="_compute_need_director",
+        store=True,
+        tracking=True,
     )
 
     _sql_constraints = [
@@ -42,6 +51,11 @@ class LabApprovalRequest(models.Model):
         )
     ]
 
+    @api.depends("amount")
+    def _compute_need_director(self):
+        for rec in self:
+            rec.need_director = rec.amount >= APPROVAL_THRESHOLD
+
     @api.constrains("amount")
     def _check_amount_positive(self):
         for rec in self:
@@ -50,18 +64,54 @@ class LabApprovalRequest(models.Model):
                     "Số tiền đề xuất phải lớn hơn 0 (VND). Vui lòng kiểm tra lại."
                 )
 
-    def action_submit(self):
-        """Gửi phiếu đi duyệt."""
-        self.write({"state": "submitted"})
+    def _new_approver_activity(self, summary):
+        approver_group = (
+            self.env.ref("lab_base.group_lab_director")
+            if self.need_director
+            else self.env.ref("lab_base.group_lab_manager")
+        )
+        for rec in self:
+            for user in approver_group.users:
+                self.env["mail.activity"].create(
+                    {
+                        "res_model_id": self.env["ir.model"]._get_id(
+                            "lab.approval.request"
+                        ),
+                        "res_id": rec.id,
+                        "user_id": user.id,
+                        "activity_type_id": self.env.ref(
+                            "mail.mail_activity_data_todo"
+                        ).id,
+                        "summary": summary,
+                        "note": rec.name,
+                    }
+                )
 
-    def action_approve(self):
-        """Duyệt phiếu."""
+    def _done_activities(self):
+        activities = self.env["mail.activity"].search(
+            [("res_id", "in", self.ids), ("res_model", "=", self._name)]
+        )
+        activities.action_done()
+
+    def action_submit(self):
+        self.write({"state": "submitted"})
+        self._new_approver_activity("Cần duyệt phiếu đề xuất")
+
+    def action_manager_approve(self):
+        for rec in self:
+            if rec.need_director:
+                rec.write({"state": "manager_approved"})
+            else:
+                rec.write({"state": "approved"})
+                rec._done_activities()
+
+    def action_director_approve(self):
         self.write({"state": "approved"})
+        self._done_activities()
 
     def action_reject(self):
-        """Từ chối phiếu."""
         self.write({"state": "rejected"})
+        self._done_activities()
 
     def action_reset_to_draft(self):
-        """Trả về nháp để chỉnh sửa."""
         self.write({"state": "draft"})

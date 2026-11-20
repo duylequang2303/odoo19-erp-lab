@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Nhân viên: chỉ thấy và thao tác phiếu của chính mình -->
+    <record id="rule_employee_own" model="ir.rules">
+        <field name="name">lab.approval.request: employee own records</field>
+        <field name="model_id" ref="model_lab_approval_request" />
+        <field name="group_id" ref="lab_base.group_lab_employee" />
+        <field name="domain_force">[('requester_id', '=', user.id)]</field>
+        <field name="perm_read" eval="1" />
+        <field name="perm_write" eval="1" />
+        <field name="perm_create" eval="1" />
+        <field name="perm_unlink" eval="0" />
+    </record>
+
+    <!-- Trưởng phòng: thấy các phiếu đang trong luồng duyệt -->
+    <record id="rule_manager_pending" model="ir.rules">
+        <field name="name">lab.approval.request: manager pending records</field>
+        <field name="model_id" ref="model_lab_approval_request" />
+        <field name="group_id" ref="lab_base.group_lab_manager" />
+        <field name="domain_force">[('state', 'in', ('submitted', 'manager_approved'))]</field>
+        <field name="perm_read" eval="1" />
+        <field name="perm_write" eval="1" />
+        <field name="perm_create" eval="1" />
+        <field name="perm_unlink" eval="1" />
+    </record>
+
+    <!-- Giám đốc: thấy toàn bộ phiếu -->
+    <record id="rule_director_all" model="ir.rules">
+        <field name="name">lab.approval.request: director all records</field>
+        <field name="model_id" ref="model_lab_approval_request" />
+        <field name="group_id" ref="lab_base.group_lab_director" />
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1" />
+        <field name="perm_write" eval="1" />
+        <field name="perm_create" eval="1" />
+        <field name="perm_unlink" eval="1" />
+    </record>
+</odoo>
